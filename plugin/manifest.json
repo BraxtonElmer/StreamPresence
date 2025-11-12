@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "StreamPresence",
+  "version": "1.0.0",
+  "description": "Automatically detects streaming content and updates Discord Rich Presence with anime, episode, and playback information via a local bridge.",
+  "permissions": ["tabs", "activeTab"],
+  "host_permissions": ["http://127.0.0.1/*", "*://*/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["*://*/*"],
+      "all_frames": true,
+      "match_origin_as_fallback": true,
+      "run_at": "document_idle",
+      "js": ["content.js"]
+    }
+  ]
+}
