@@ -8,7 +8,7 @@ A lightweight Discord Rich Presence client that displays real-time streaming act
 
 ## Features
 
-- Real-time updates every second for accurate playback tracking
+- Real-time playback tracking with configurable update intervals
 - Dynamic poster images pulled directly from streaming sites
 - Episode and timestamp tracking with automatic detection
 - Clickable links in presence for direct episode access
@@ -191,7 +191,8 @@ StreamPresence/
 │   └── background.js      # Background service worker
 ├── python/                # Backend server
 │   └── app.py            # Flask application
-├── .env                  # Environment configuration
+├── .env                  # Environment configuration (required)
+├── config.json           # Application settings (optional)
 ├── .gitignore           # Git exclusions
 ├── LICENSE              # MIT License
 ├── README.md           # Documentation
@@ -202,18 +203,38 @@ StreamPresence/
 
 ## Configuration Options
 
-### Port Configuration
-Modify the server port in `.env`:
+### Environment Variables (`.env`)
+
+**Required:**
 ```env
-FLASK_PORT=8731
+DISCORD_CLIENT_ID=your_application_id_here
 ```
 
-### Static Image Assets
-If you uploaded images to your Discord Application:
+**Optional:**
 ```env
-LARGE_IMAGE_KEY=your_asset_key
+FLASK_PORT=8731          # Server port (default: 8731)
+FLASK_HOST=127.0.0.1     # Server host (default: 127.0.0.1)
+LARGE_IMAGE_KEY=         # Static Discord asset key (leave empty for dynamic images)
 ```
-Leave empty to use dynamic images from streaming sites.
+
+### Application Settings (`config.json`)
+
+The included `config.json` file allows you to customize application behavior:
+
+```json
+{
+  "update_interval": 5
+}
+```
+
+**Available Settings:**
+
+- `update_interval` (number): Seconds between Discord Rich Presence updates
+  - **Default:** 5 seconds
+  - **Recommended:** 5-15 seconds to avoid Discord's rate limit (5 updates per 20 seconds)
+  - **Note:** The browser extension sends data every 1 second; the server rate-limits outgoing updates based on this setting
+
+Edit `config.json` and restart the server to apply changes.
 
 ## Troubleshooting
 
