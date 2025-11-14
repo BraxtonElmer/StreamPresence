@@ -1,6 +1,7 @@
 # anime_presence.py
 import os
 import time
+import json
 from threading import Lock
 from flask import Flask, request, jsonify
 from pypresence import Presence
@@ -15,6 +16,18 @@ PORT = int(os.getenv("FLASK_PORT", 8731))
 HOST = os.getenv("FLASK_HOST", "127.0.0.1")
 LARGE_IMAGE_KEY = os.getenv("LARGE_IMAGE_KEY", "")
 
+# Load config file
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config.json")
+try:
+    with open(CONFIG_PATH, 'r') as f:
+        config = json.load(f)
+        UPDATE_INTERVAL = config.get("update_interval", 5)
+except (FileNotFoundError, json.JSONDecodeError) as e:
+    print(f"Warning: Could not load config.json, using default update interval of 5 seconds")
+    UPDATE_INTERVAL = 5
+
+print(f"Update interval set to {UPDATE_INTERVAL} seconds")
+
 if not CLIENT_ID:
     raise ValueError("DISCORD_CLIENT_ID not found in .env file. Please create a .env file with your Discord Application Client ID.")
 
@@ -22,6 +35,7 @@ app = Flask(__name__)
 rpc = Presence(CLIENT_ID)
 connected = False
 lock = Lock()
+last_update_time = 0
 
 def ensure_connected():
     global connected, rpc
@@ -88,9 +102,19 @@ def update():
     if url:
         payload["buttons"] = [{"label": "Open episode", "url": url}]
     
+    # Rate limiting check
+    global last_update_time
+    current_time = time.time()
+    time_since_last = current_time - last_update_time
+    
+    if time_since_last < UPDATE_INTERVAL:
+        # Skip update but return success
+        return jsonify({"ok": True, "skipped": True, "reason": f"Rate limited: {UPDATE_INTERVAL - time_since_last:.1f}s remaining"})
+    
     try:
         ensure_connected()
         rpc.update(**payload)
+        last_update_time = current_time
         return jsonify({"ok": True})
     except PipeClosed:
         print("Pipe closed, attempting to reconnect...")

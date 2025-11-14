@@ -1,0 +1,4 @@
+{
+  "update_interval": 3,
+  "comment": "update_interval: Seconds between Discord Rich Presence updates (recommended: 5-15 to avoid rate limits)"
+}
