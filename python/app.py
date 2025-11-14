@@ -36,6 +36,7 @@ rpc = Presence(CLIENT_ID)
 connected = False
 lock = Lock()
 last_update_time = 0
+preserved_start_time = None
 
 def ensure_connected():
     global connected, rpc
@@ -86,6 +87,11 @@ def update():
     paused  = bool(d.get("paused", False))
     poster  = d.get("posterUrl")  # Get the poster image URL
 
+    # Initialize preserved start timestamp once per session
+    global preserved_start_time
+    if preserved_start_time is None:
+        preserved_start_time = time.time()
+    
     state = f"{episode} — {fmt(cur)}" + (f" / {fmt(dur)}" if dur > 0 else "")
     
     # Use poster URL if available, otherwise fall back to static image key
@@ -97,6 +103,10 @@ def update():
         "large_image": large_img,
         "large_text": title,  # Show anime title on hover
     }
+    
+    # Always include start time for continuous elapsed timer
+    if preserved_start_time is not None:
+        payload["start"] = int(preserved_start_time)
     
     # Only add buttons if URL exists
     if url:
@@ -131,9 +141,11 @@ def update():
 
 @app.route("/clear", methods=["POST"])
 def clear():
+    global preserved_start_time
     try:
         ensure_connected()
         rpc.clear()
+        preserved_start_time = None
         return jsonify({"ok": True})
     except PipeClosed:
         print("Pipe closed, attempting to reconnect...")
