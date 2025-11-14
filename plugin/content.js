@@ -1,4 +1,13 @@
 (function () {
+  // Only run on supported streaming sites (check current frame's hostname)
+  const supportedSites = ['hianime', 'aniwatch', 'zoro'];
+  const hostname = window.location.hostname.toLowerCase();
+  
+  // Allow if hostname contains supported site OR if we're in an iframe (player might be cross-origin)
+  const isSupported = supportedSites.some(site => hostname.includes(site)) || window.top !== window;
+  
+  if (!isSupported) return;
+
   const isTop = window.top === window;
 
   // ---------- Shared helpers ----------
